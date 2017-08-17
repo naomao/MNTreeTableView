@@ -42,7 +42,7 @@
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     TreeModel * tree = self.mDatas[indexPath.row];
-    //展开
+#pragma mark - 展开
     if (tree.subItems.count && !tree.show) {
         //先改变点击行数据源
         tree.show = YES;
@@ -55,11 +55,12 @@
             NSIndexPath * indexPathItem = [NSIndexPath indexPathForRow:indexPath.row + i + 1 inSection:0];
             [mIndexPaths addObject:indexPathItem];
         }
-
+        
         [self.tableView insertRowsAtIndexPaths:mIndexPaths withRowAnimation:UITableViewRowAnimationBottom];
         return;
     }
-    //关闭
+    
+#pragma mark - 关闭
     if (tree.subItems.count && tree.show) {
         //先改变点击行数据源
         tree.show = NO;
@@ -67,35 +68,38 @@
         //再递归移除子数据
         NSMutableArray * mIndexPaths = [NSMutableArray arrayWithCapacity:0];
         NSArray * subTrees = tree.subItems;
-        NSInteger index = 0;//记录移除了哪些数据
+        NSInteger index = 1;//记录移除了哪些数据
+        
         for (NSInteger i = 0; i < subTrees.count; i ++) {
             TreeModel *subTree = subTrees[i];
             //先移外层
             [self.mDatas removeObject:subTree];
-            NSIndexPath * indexPath0 = [NSIndexPath indexPathForRow:indexPath.row + index + 1 inSection:0];
+            NSIndexPath * indexPath0 = [NSIndexPath indexPathForRow:indexPath.row + index inSection:0];
             [mIndexPaths addObject:indexPath0];
             index ++;//每成功移除一个 都要记录
             //再移内层
             NSArray *subSubTrees = subTree.subItems;
             if (subSubTrees.count && subTree.show) {
-                for (NSInteger j = 0; j <subSubTrees.count ; j ++) {
-                    TreeModel * subSubTree = subSubTrees[j];
-                    subSubTree.show = NO;
-                    [subTree.subItems replaceObjectAtIndex:i withObject:subSubTree];
-                    
-                    [self.mDatas removeObject:subSubTree];
-                    NSIndexPath * indexPath1 = [NSIndexPath indexPathForRow:indexPath.row + index + 1 inSection:0];
-                    [mIndexPaths addObject:indexPath1];
-                    index ++;
-                }
+                
                 //把当前层所有的子数据都成功移除后，不要忘了重置这一层的数据
                 subTree.show = NO;
                 [tree.subItems replaceObjectAtIndex:i withObject:subTree];
+                
+                for (NSInteger j = 0; j < subSubTrees.count ; j ++) {
+                    TreeModel * subSubTree = subSubTrees[j];
+                    
+                    [self.mDatas removeObject:subSubTree];
+                    
+                    NSIndexPath * indexPath1 = [NSIndexPath indexPathForRow:indexPath.row + index inSection:0];
+                    [mIndexPaths addObject:indexPath1];
+                    index ++;
+                }
             }
         }
         [self.tableView deleteRowsAtIndexPaths:mIndexPaths withRowAnimation:UITableViewRowAnimationBottom];
         return;
     }
+    
     if (!tree.subItems.count) {
         // 获取点击数据处理
         NSLog(@"点击行的ID：%@",tree.ID);
